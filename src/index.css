@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand: deep navy / royal blue */
+  --color-navy-50: #eef2fa;
+  --color-navy-100: #d7e1f2;
+  --color-navy-200: #b1c3e5;
+  --color-navy-300: #839fd3;
+  --color-navy-400: #5676bb;
+  --color-navy-500: #37559e;
+  --color-navy-600: #284080;
+  --color-navy-700: #1f3366;
+  --color-navy-800: #15224a;
+  --color-navy-900: #0c1630;
+  --color-navy-950: #070e20;
+
+  /* Brand: Monarch gold accent */
+  --color-gold-50: #fdf8ec;
+  --color-gold-100: #faeec8;
+  --color-gold-200: #f3dc92;
+  --color-gold-300: #ecc660;
+  --color-gold-400: #e0ab38;
+  --color-gold-500: #c9922a;
+  --color-gold-600: #a97420;
+  --color-gold-700: #87591c;
+  --color-gold-800: #6c471c;
+  --color-gold-900: #5b3b1b;
+
+  --shadow-card: 0 1px 2px rgba(15, 23, 55, 0.04), 0 8px 24px -8px rgba(15, 23, 55, 0.12);
+  --shadow-card-hover: 0 4px 10px rgba(15, 23, 55, 0.06), 0 16px 36px -12px rgba(15, 23, 55, 0.18);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f6f7fb;
+  color: #0f1a30;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+::selection {
+  background-color: var(--color-gold-200);
+  color: var(--color-navy-900);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd3e1; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #aab4c9; }
+
+/* Focus visibility for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-gold-400);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, var(--color-navy-900) 0%, var(--color-navy-700) 55%, var(--color-navy-600) 100%);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(90deg, #ecc660, #e0ab38 45%, #c9922a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.card-surface {
+  background: #ffffff;
+  border: 1px solid #ecedf5;
+  border-radius: 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+.card-surface-hover {
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+.card-surface-hover:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.animate-fade-in {
+  animation: fadeIn 260ms ease both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-scale-in {
+  animation: scaleIn 160ms ease both;
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Slide-in panels (e.g. mobile nav drawer) must stay fully opaque the whole
+   time — only the position animates, never the opacity — so they're never
+   caught mid-transition looking see-through. */
+.animate-slide-in-right {
+  animation: slideInRight 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes slideInRight {
+  from { transform: translateX(16px); }
+  to { transform: translateX(0); }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #eef0f6 25%, #f6f7fb 37%, #eef0f6 63%);
+  background-size: 400% 100%;
+  animation: skeleton-loading 1.4s ease infinite;
+}
+@keyframes skeleton-loading {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* Scopes window.print() output to a single marked element (e.g. a receipt or gate pass)
+   instead of printing the whole app shell/sidebar. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt,
+  #receipt *,
+  #gate-pass-printable,
+  #gate-pass-printable * {
+    visibility: visible;
+  }
+  #receipt,
+  #gate-pass-printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
