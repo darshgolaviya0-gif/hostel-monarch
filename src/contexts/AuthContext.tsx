@@ -44,6 +44,8 @@ interface AuthContextValue {
   logout: () => void;
   dismissExpiry: () => void;
   extendSession: () => void;
+  /** Saves a new profile photo (as a data URL) for the current user. Persists in live mode, in-memory in demo mode. */
+  updateAvatar: (dataUrl: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -78,7 +80,7 @@ function mapProfileToUser(profile: ProfileRow): User {
     email: profile.email,
     username: profile.email,
     role: profile.role,
-    avatar: `https://i.pravatar.cc/150?u=${profile.id}`,
+    avatar: typeof meta.avatar === 'string' && meta.avatar ? meta.avatar : `https://i.pravatar.cc/150?u=${profile.id}`,
     phone: profile.phone ?? '',
     designation: typeof meta.designation === 'string' ? meta.designation : undefined,
     studentId: typeof meta.studentId === 'string' ? meta.studentId : undefined,
@@ -266,6 +268,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setDemoSession(null);
   }, []);
 
+  const updateAvatar = useCallback(async (dataUrl: string): Promise<{ success: boolean; error?: string }> => {
+    if (isLiveMode && supabase) {
+      if (!liveSession) return { success: false, error: 'Not signed in.' };
+      const userId = liveSession.user.id;
+      const { data: row, error: fetchError } = await supabase.from('profiles').select('meta').eq('id', userId).single();
+      if (fetchError) return { success: false, error: fetchError.message };
+      const newMeta = { ...((row?.meta as Record<string, unknown>) ?? {}), avatar: dataUrl };
+      const { error } = await supabase.from('profiles').update({ meta: newMeta }).eq('id', userId);
+      if (error) return { success: false, error: error.message };
+      setLiveSession((prev) => (prev ? { ...prev, user: { ...prev.user, avatar: dataUrl } } : prev));
+      return { success: true };
+    }
+    // ---- demo mode: in-memory + persisted session only ----
+    setDemoSession((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, user: { ...prev.user, avatar: dataUrl } };
+      const remembered = !!localStorage.getItem(SESSION_KEY);
+      persistDemo(updated, remembered);
+      return updated;
+    });
+    return { success: true };
+  }, [liveSession]);
+
   const dismissExpiry = useCallback(() => setSessionExpired(false), []);
 
   const extendSession = useCallback(() => {
@@ -293,8 +318,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       dismissExpiry,
       extendSession,
+      updateAvatar,
     }),
-    [session, sessionExpired, accountStatus, login, loginWithDemo, signUp, requestPasswordReset, logout, dismissExpiry, extendSession]
+    [session, sessionExpired, accountStatus, login, loginWithDemo, signUp, requestPasswordReset, logout, dismissExpiry, extendSession, updateAvatar]
   );
 
   if (isLiveMode && !liveLoaded) {

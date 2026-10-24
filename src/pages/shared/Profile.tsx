@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Pencil, Save, X, Mail, Phone, Droplet, Cake, GraduationCap, MapPin, Users2, ShieldAlert, DoorOpen } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Pencil, Save, X, Mail, Phone, Droplet, Cake, GraduationCap, MapPin, Users2, ShieldAlert, DoorOpen, Camera, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppData } from '../../store/AppDataContext';
@@ -10,6 +10,54 @@ import { Badge } from '../../components/ui/Badge';
 import { ProgressBar } from '../../components/ui/Misc';
 import { formatDateIN } from '../../utils/format';
 import { ROLE_META } from '../../data/users';
+import { fileToResizedDataUrl } from '../../utils/image';
+
+function AvatarUpload({ src, name }: { src: string; name: string }) {
+  const { updateAvatar } = useAuth();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const dataUrl = await fileToResizedDataUrl(file);
+      const result = await updateAvatar(dataUrl);
+      if (result.success) {
+        toast.success('Profile photo updated.');
+      } else {
+        toast.error(result.error ?? 'Could not update your photo. Please try again.');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not process that image.');
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className="group relative h-20 w-20 shrink-0">
+      <img src={src} alt={name} className="h-20 w-20 rounded-2xl object-cover ring-4 ring-navy-50" />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        aria-label="Change profile photo"
+        className="absolute -bottom-1.5 -right-1.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-navy-900 text-white shadow-md transition hover:bg-navy-800 disabled:opacity-70"
+      >
+        {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleFile(e.target.files?.[0])}
+      />
+    </div>
+  );
+}
 
 function Field({ label, value, name, editing, onChange, type = 'text' }: {
   label: string; value: string; name: string; editing: boolean; onChange: (n: string, v: string) => void; type?: string;
@@ -63,7 +111,7 @@ export default function Profile() {
       <div className="mx-auto max-w-2xl space-y-6">
         <Card>
           <div className="flex items-center gap-4">
-            <img src={user.avatar} alt={user.name} className="h-20 w-20 rounded-2xl object-cover ring-4 ring-navy-50" />
+            <AvatarUpload src={user.avatar} name={user.name} />
             <div>
               <h2 className="font-display text-xl font-extrabold text-navy-950">{user.name}</h2>
               <p className="text-sm text-slate-500">{user.designation}</p>
@@ -98,7 +146,7 @@ export default function Profile() {
       <Card>
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
-            <img src={student.avatar} alt={student.name} className="h-20 w-20 rounded-2xl object-cover ring-4 ring-navy-50" />
+            <AvatarUpload src={user.avatar || student.avatar} name={student.name} />
             <div>
               <h2 className="font-display text-xl font-extrabold text-navy-950">{student.name}</h2>
               <p className="text-sm text-slate-500">{student.enrollmentNo}</p>
