@@ -119,6 +119,7 @@ interface AppDataContextValue extends AppDataState {
   markAllNotificationsRead: (role: Role) => void;
 
   updateStudent: (id: string, patch: Partial<Student>) => void;
+  addStudentLocal: (s: Student) => void;
 
   reviewAdmission: (id: string, stage: Admission['stage'], by: string, remark?: string) => void;
   verifyDocument: (admissionId: string, docId: string, status: 'Verified' | 'Rejected', remark?: string) => void;
@@ -256,6 +257,15 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       if (merged) sync('updateStudent', StudentsAPI.upsert(merged));
       return next;
     });
+  }, []);
+
+  // Inserts a Student record into local state only (no remote write) — used
+  // right after a caller has already persisted the record itself, e.g. when
+  // an admin approves a student's account and their `students` row is
+  // created directly via StudentsAPI.upsert. Keeps the Student Directory in
+  // sync immediately without requiring a full page reload.
+  const addStudentLocal = useCallback((s: Student) => {
+    setStudents((prev) => (prev.some((p) => p.id === s.id) ? prev : [...prev, s]));
   }, []);
 
   const reviewAdmission = useCallback((id: string, stage: Admission['stage'], by: string, remark?: string) => {
@@ -696,6 +706,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       markNotificationRead,
       markAllNotificationsRead,
       updateStudent,
+      addStudentLocal,
       reviewAdmission,
       verifyDocument,
       createAdmission,
@@ -722,7 +733,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     [
       students, rooms, admissions, invoices, payments, complaints, leaves, gateLogs, visitors, parcels,
       menu, participation, dietRequests, feedback, notices, auditLogs, notifications, dataLoading,
-      addAudit, addNotification, markNotificationRead, markAllNotificationsRead, updateStudent,
+      addAudit, addNotification, markNotificationRead, markAllNotificationsRead, updateStudent, addStudentLocal,
       reviewAdmission, verifyDocument, createAdmission, allocateBed, vacateBed, transferStudent, payInvoice,
       createComplaint, assignComplaint, updateComplaintStatus, createLeave, reviewLeave, verifyQRPass,
       registerVisitor, updateVisitorStatus, updateParcelStatus, toggleMealParticipation, submitDietRequest,

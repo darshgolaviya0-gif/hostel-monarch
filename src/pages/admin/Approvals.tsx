@@ -11,6 +11,8 @@ import { ROLE_META } from '../../data/users';
 import { useAppData } from '../../store/AppDataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase, isLiveMode } from '../../lib/supabase';
+import { StudentsAPI } from '../../lib/liveData';
+import type { Student } from '../../types';
 import { formatDateIN } from '../../utils/format';
 
 const STATUS_TONE = {
@@ -33,7 +35,7 @@ interface ProfileRow {
 
 export default function Approvals() {
   const { user } = useAuth();
-  const { addAudit } = useAppData();
+  const { addAudit, addStudentLocal } = useAppData();
   const [rows, setRows] = useState<ProfileRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'pending' | 'all'>('pending');
@@ -73,9 +75,59 @@ export default function Approvals() {
   const approve = async (row: ProfileRow) => {
     if (!supabase || !user) return;
     setBusyId(row.id);
+
+    // For students, create their hostel Student record (if they don't already
+    // have one) so they instantly show up in the Student Directory, and link
+    // it back onto their account (meta.studentId) so their own dashboard
+    // knows which record is theirs.
+    let metaPatch: Record<string, unknown> | undefined;
+    if (row.role === 'student') {
+      const meta = (row.meta ?? {}) as Record<string, unknown>;
+      const existingStudentId = typeof meta.studentId === 'string' ? meta.studentId : undefined;
+      if (!existingStudentId) {
+        const studentId = `HM-STU-${row.id.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+        const newStudent: Student = {
+          id: studentId,
+          enrollmentNo: '',
+          name: row.full_name,
+          avatar: '',
+          dob: '',
+          gender: 'Other',
+          bloodGroup: 'O+',
+          phone: row.phone ?? '',
+          email: row.email,
+          college: '',
+          course: typeof meta.course === 'string' ? meta.course : '',
+          semester: '',
+          address: { line: '', city: '', state: '', pincode: '' },
+          guardian: { name: '', relationship: '', phone: '', email: '' },
+          emergency: { name: '', relationship: '', phone: '' },
+          allocation: null,
+          status: 'Active',
+          profileCompletion: 20,
+          feeDue: 0,
+          admissionStatus: 'Approved',
+        };
+        try {
+          await StudentsAPI.upsert(newStudent, row.id);
+        } catch (err) {
+          setBusyId(null);
+          toast.error('Could not create student record: ' + (err instanceof Error ? err.message : String(err)));
+          return;
+        }
+        addStudentLocal(newStudent);
+        metaPatch = { ...meta, studentId };
+      }
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update({ status: 'approved', approved_by: user.id, approved_at: new Date().toISOString() })
+      .update({
+        status: 'approved',
+        approved_by: user.id,
+        approved_at: new Date().toISOString(),
+        ...(metaPatch ? { meta: metaPatch } : {}),
+      })
       .eq('id', row.id);
     setBusyId(null);
     if (error) { toast.error('Approval failed: ' + error.message); return; }
