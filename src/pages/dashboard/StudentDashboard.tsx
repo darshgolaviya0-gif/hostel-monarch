@@ -10,7 +10,7 @@ import { useCurrentStudent } from '../../hooks/useCurrentStudent';
 import { Card, CardHeader } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { ProgressBar } from '../../components/ui/Misc';
-import { formatINR, formatDateIN } from '../../utils/format';
+import { formatINR, formatDateIN, initials } from '../../utils/format';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -42,7 +42,13 @@ export default function StudentDashboard() {
             <h2 className="font-display text-2xl font-extrabold text-white">{student.name.split(' ')[0]} 👋</h2>
             <p className="mt-1 text-sm text-navy-200">{student.course} · {student.semester}</p>
           </div>
-          <img src={student.avatar} alt={student.name} className="h-16 w-16 rounded-2xl object-cover ring-4 ring-white/20" />
+          {student.avatar ? (
+            <img src={student.avatar} alt={student.name} className="h-16 w-16 rounded-2xl object-cover ring-4 ring-white/20" />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-lg font-bold text-white ring-4 ring-white/20">
+              {initials(student.name)}
+            </div>
+          )}
         </div>
       </div>
 

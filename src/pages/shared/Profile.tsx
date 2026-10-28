@@ -11,6 +11,7 @@ import { ProgressBar } from '../../components/ui/Misc';
 import { formatDateIN } from '../../utils/format';
 import { ROLE_META } from '../../data/users';
 import { fileToResizedDataUrl } from '../../utils/image';
+import { initials } from '../../utils/format';
 
 function AvatarUpload({ src, name }: { src: string; name: string }) {
   const { updateAvatar } = useAuth();
@@ -38,7 +39,13 @@ function AvatarUpload({ src, name }: { src: string; name: string }) {
 
   return (
     <div className="group relative h-20 w-20 shrink-0">
-      <img src={src} alt={name} className="h-20 w-20 rounded-2xl object-cover ring-4 ring-navy-50" />
+      {src ? (
+        <img src={src} alt={name} className="h-20 w-20 rounded-2xl object-cover ring-4 ring-navy-50" />
+      ) : (
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-navy-100 text-xl font-bold text-navy-700 ring-4 ring-navy-50">
+          {initials(name)}
+        </div>
+      )}
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -58,6 +65,7 @@ function AvatarUpload({ src, name }: { src: string; name: string }) {
     </div>
   );
 }
+
 
 function Field({ label, value, name, editing, onChange, type = 'text' }: {
   label: string; value: string; name: string; editing: boolean; onChange: (n: string, v: string) => void; type?: string;

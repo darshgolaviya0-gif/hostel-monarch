@@ -328,7 +328,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         applicationNo,
         studentName: payload.studentName,
         studentId: `HM-STU-PENDING-${Date.now().toString().slice(-4)}`,
-        avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(payload.email)}`,
+        avatar: '',
         course: payload.course,
         college: payload.college,
         phone: payload.phone,

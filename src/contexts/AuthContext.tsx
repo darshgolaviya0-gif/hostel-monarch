@@ -80,7 +80,7 @@ function mapProfileToUser(profile: ProfileRow): User {
     email: profile.email,
     username: profile.email,
     role: profile.role,
-    avatar: typeof meta.avatar === 'string' && meta.avatar ? meta.avatar : `https://i.pravatar.cc/150?u=${profile.id}`,
+    avatar: typeof meta.avatar === 'string' ? meta.avatar : '',
     phone: profile.phone ?? '',
     designation: typeof meta.designation === 'string' ? meta.designation : undefined,
     studentId: typeof meta.studentId === 'string' ? meta.studentId : undefined,
